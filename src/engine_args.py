@@ -139,7 +139,7 @@ def get_engine_args():
     
     # Get env args that match keys in AsyncEngineArgs
     args.update(os.environ)
-    
+        
     # Get local args if model is baked in and overwrite env args
     args.update(get_local_args())
     
@@ -174,5 +174,9 @@ def get_engine_args():
     # if "gemma-2" in args.get("model", "").lower():
     #     os.environ["VLLM_ATTENTION_BACKEND"] = "FLASHINFER"
     #     logging.info("Using FLASHINFER for gemma-2 model.")
-        
+    
+    if isinstance(args.get('hf_overrides'), str):
+        args['hf_overrides'] = json.loads(args['hf_overrides'])
+        logging.info(f"Using hf_overrides (type={type(args['hf_overrides'])}): {args['hf_overrides']}")
+    
     return AsyncEngineArgs(**args)

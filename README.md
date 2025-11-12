@@ -117,7 +117,7 @@ You can deploy **any model on Hugging Face** that is supported by vLLM. For the 
 
 # Usage: OpenAI Compatibility
 
-The vLLM Worker is fully compatible with OpenAI's API, and you can use it with any OpenAI Codebase by changing only 3 lines in total. The supported routes are <ins>Chat Completions</ins> and <ins>Models</ins> - with both streaming and non-streaming.
+The vLLM Worker is fully compatible with OpenAI's API, and you can use it with any OpenAI Codebase by changing only 3 lines in total. The supported routes are <ins>Chat Completions</ins>, <ins>Models</ins>, and <ins>Score</ins> - with both streaming and non-streaming support for completions.
 
 ## Modifying your OpenAI Codebase to use your deployed vLLM Worker
 
@@ -289,6 +289,70 @@ This is the format used for GPT-4 and focused on instruction-following and chat.
   # Print the response
   print(response.choices[0].message.content)
   ```
+
+### Score API (Reranking/Scoring):
+
+The Score API enables similarity scoring and reranking using cross-encoder and embedding models. This is particularly useful for document reranking, similarity scoring, and information retrieval tasks.
+
+**Compatible Models:**
+
+- Cross-encoder models (e.g., `Qwen/Qwen3-Reranker-0.6B`, `BAAI/bge-reranker-v2-m3`)
+- Embedding models supporting scoring functionality
+
+**Request Format:**
+
+```python
+import requests
+
+# Using HTTP requests directly
+response = requests.post(
+    "https://api.runpod.ai/v2/<YOUR ENDPOINT ID>/openai/v1/score",
+    headers={
+        "Content-Type": "application/json",
+        "Authorization": "Bearer <YOUR RUNPOD API KEY>"
+    },
+    json={
+        "model": "Qwen/Qwen3-Reranker-0.6B",
+        "text_1": "What is the capital of France?",
+        "text_2": [
+            "The capital of Brazil is Brasilia.",
+            "The capital of France is Paris.",
+            "The capital of Spain is Madrid."
+        ]
+    }
+)
+
+scores = response.json()
+print(scores)
+```
+
+**Using curl:**
+
+```bash
+curl -X POST 'https://api.runpod.ai/v2/<YOUR ENDPOINT ID>/openai/v1/score' \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: Bearer <YOUR RUNPOD API KEY>' \
+  -d '{
+    "model": "Qwen/Qwen3-Reranker-0.6B",
+    "text_1": "What is the capital of France?",
+    "text_2": [
+      "The capital of Brazil is Brasilia.",
+      "The capital of France is Paris.",
+      "The capital of Spain is Madrid."
+    ]
+  }'
+```
+
+**Supported Input Formats:**
+
+- **Single pair**: `text_1` as string, `text_2` as string
+- **Batch scoring**: `text_1` as string, `text_2` as array of strings
+- **Multiple pairs**: `text_1` as array, `text_2` as array (paired by index)
+
+**Optional Parameters:**
+
+- `encoding_format`: Response format (e.g., "float")
+- Standard vLLM parameters for pooling models
 
 ### Getting a list of names for available models:
 

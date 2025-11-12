@@ -11,7 +11,8 @@ from vllm import AsyncLLMEngine
 from vllm.entrypoints.logger import RequestLogger
 from vllm.entrypoints.openai.serving_chat import OpenAIServingChat
 from vllm.entrypoints.openai.serving_completion import OpenAIServingCompletion
-from vllm.entrypoints.openai.protocol import ChatCompletionRequest, CompletionRequest, ErrorResponse
+from vllm.entrypoints.openai.serving_score import ServingScores
+from vllm.entrypoints.openai.protocol import ChatCompletionRequest, CompletionRequest, ScoreRequest, ErrorResponse
 from vllm.entrypoints.openai.serving_models import BaseModelPath, LoRAModulePath, OpenAIServingModels
 
 
@@ -242,12 +243,22 @@ class OpenAIvLLMEngine(vLLMEngine):
             request_logger=None,
             # return_token_as_token_ids=False,
         )
+        
+        self.score_engine = ServingScores(
+            engine_client=self.llm,
+            model_config=self.model_config,
+            models=self.serving_models,
+            request_logger=None,
+        )
     
     async def generate(self, openai_request: JobInput):
         if openai_request.openai_route == "/v1/models":
             yield await self._handle_model_request()
         elif openai_request.openai_route in ["/v1/chat/completions", "/v1/completions"]:
             async for response in self._handle_chat_or_completion_request(openai_request):
+                yield response
+        elif openai_request.openai_route == "/v1/score":
+            async for response in self._handle_score_request(openai_request):
                 yield response
         else:
             yield create_error_response("Invalid route").model_dump()
@@ -303,4 +314,18 @@ class OpenAIvLLMEngine(vLLMEngine):
                 if self.raw_openai_output:
                     batch = "".join(batch)
                 yield batch
-            
+    
+    async def _handle_score_request(self, openai_request: JobInput):
+        try:
+            request = ScoreRequest(**openai_request.openai_input)
+        except Exception as e:
+            yield create_error_response(str(e)).model_dump()
+            return
+        
+        response = await self.score_engine.create_score(request, raw_request=None)
+        
+        if isinstance(response, ErrorResponse):
+            logging.error(f"Score request error: {response}")
+            yield response.model_dump()
+        else:
+            yield response.model_dump()
