@@ -1,0 +1,14 @@
+FROM docker.io/runpod/worker-v1-vllm:v2.9.6
+
+ENV MODEL_NAME="qwen/qwen3-reranker-0.6b"
+RUN if [ -n "$MODEL_NAME" ]; then \
+    python3 /src/download_model.py; \
+    fi; \
+    rm -rf $HF_HOME/xet
+
+# skip multi-node p2p check for single node setups
+ENV VLLM_SKIP_P2P_CHECK=1
+# limit number of threads to avoid CPU competing for locks
+ENV OMP_NUM_THREADS=1
+
+COPY src /src
