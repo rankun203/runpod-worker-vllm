@@ -312,7 +312,7 @@ response = requests.post(
         "Authorization": "Bearer <YOUR RUNPOD API KEY>"
     },
     json={
-        "model": "Qwen/Qwen3-Reranker-0.6B",
+        "model": "qwen/qwen3-reranker-0.6b",
         "text_1": "What is the capital of France?",
         "text_2": [
             "The capital of Brazil is Brasilia.",
@@ -333,7 +333,7 @@ curl -X POST 'https://api.runpod.ai/v2/<YOUR ENDPOINT ID>/openai/v1/score' \
   -H 'Content-Type: application/json' \
   -H 'Authorization: Bearer <YOUR RUNPOD API KEY>' \
   -d '{
-    "model": "Qwen/Qwen3-Reranker-0.6B",
+    "model": "qwen/qwen3-reranker-0.6b",
     "text_1": "What is the capital of France?",
     "text_2": [
       "The capital of Brazil is Brasilia.",
@@ -343,16 +343,9 @@ curl -X POST 'https://api.runpod.ai/v2/<YOUR ENDPOINT ID>/openai/v1/score' \
   }'
 ```
 
-**Supported Input Formats:**
+**Notes:**
 
-- **Single pair**: `text_1` as string, `text_2` as string
-- **Batch scoring**: `text_1` as string, `text_2` as array of strings
-- **Multiple pairs**: `text_1` as array, `text_2` as array (paired by index)
-
-**Optional Parameters:**
-
-- `encoding_format`: Response format (e.g., "float")
-- Standard vLLM parameters for pooling models
+- ‼️ The model specified should be lowercase, even if you used CamelCase when deploying.
 
 ### Getting a list of names for available models:
 
